@@ -1,0 +1,19 @@
+# Build outputs
+disable-key
+snoop-key
+
+# Patch files
+*.patch
+
+# Object files
+*.o
+*.d
+*.dSYM/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
