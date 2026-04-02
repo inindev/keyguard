@@ -1,20 +1,13 @@
 CC = clang
 CFLAGS = -Wall -Wextra -O2
-FRAMEWORKS = -framework CoreGraphics -framework ApplicationServices
-PREFIX = /usr/local
+HID_FRAMEWORKS = -framework IOKit -framework CoreFoundation
 
-all: keyguard snoop-key
-
-keyguard: keyguard.c
-	$(CC) $(CFLAGS) -o $@ $< $(FRAMEWORKS)
+all: snoop-key
 
 snoop-key: snoop-key.c
-	$(CC) $(CFLAGS) -o $@ $< $(FRAMEWORKS)
-
-install: keyguard
-	install -m 755 keyguard $(PREFIX)/bin/keyguard
+	$(CC) $(CFLAGS) -o $@ $< $(HID_FRAMEWORKS)
 
 clean:
-	rm -f keyguard snoop-key
+	rm -f snoop-key
 
-.PHONY: install clean
+.PHONY: all clean

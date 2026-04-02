@@ -1,81 +1,86 @@
-# keyguard
+# mackeys
 
-Disable or debounce keyboard keys on macOS. Suppress keys entirely or require a long press to activate.
+Disable keyboard keys on macOS using `hidutil`.
 
-    ./keyguard dnd                     # fully disable the Focus/DND key
-    ./keyguard capslock:debounce       # caps lock only activates on 1s hold
-    ./keyguard dnd capslock:debounce   # mix both modes
+## How to disable a key
 
-## Build
+Map the key to an undefined usage so it does nothing:
+
+    hidutil property --set '{"UserKeyMapping":[{
+      "HIDKeyboardModifierMappingSrc": 0x<KEY_CODE>,
+      "HIDKeyboardModifierMappingDst": 0xFF000001
+    }]}'
+
+To disable multiple keys, add more entries to the `UserKeyMapping` array.
+
+## How to disable Do Not Disturb
+
+The moon/DND key on MacBook keyboards is `0x10000009B`:
+
+    hidutil property --set '{"UserKeyMapping":[{
+      "HIDKeyboardModifierMappingSrc": 0x10000009B,
+      "HIDKeyboardModifierMappingDst": 0xFF000001
+    }]}'
+
+This disables DND while leaving fn+F6 intact.
+
+## How to disable Caps Lock
+
+Caps Lock is `0x700000039`:
+
+    hidutil property --set '{"UserKeyMapping":[{
+      "HIDKeyboardModifierMappingSrc": 0x700000039,
+      "HIDKeyboardModifierMappingDst": 0xFF000001
+    }]}'
+
+### How to debounce Caps Lock
+
+If you still want Caps Lock but want to prevent accidental activation,
+`hidutil` has a built-in debounce. This requires a 1-second hold:
+
+    hidutil property --set '{"CapsLockDelayOverride":1000}'
+
+Adjust the value in milliseconds.
+
+## How to reset
+
+Clear all disabled keys:
+
+    hidutil property --set '{"UserKeyMapping":[]}'
+
+Clear CapsLock debounce:
+
+    hidutil property --set '{"CapsLockDelayOverride":0}'
+
+## Persistence
+
+These settings do not survive a reboot. Run the commands again after
+restarting, or save them to a script.
+
+## Finding key codes
+
+If you don't know the key code for the key you want to disable, build and
+run the helper:
 
     make
-
-## Usage
-
-Keys can be specified by name or raw keycode:
-
-    ./keyguard f6 capslock          # disable by name
-    ./keyguard 178                  # disable by keycode
-
-### Debounce mode
-
-Append `:debounce` to require a sustained press before a key activates.
-Short or accidental taps are silently suppressed.
-
-    ./keyguard capslock:debounce          # default 1000ms
-    ./keyguard capslock:debounce=500      # 500ms hold required
-    ./keyguard capslock:debounce=2000     # 2s hold required
-
-### Supported key names
-
-`dnd` / `focus`, `capslock`, `escape`, `f1`-`f12` -- or any raw macOS
-virtual keycode as a number.
-
-## Finding keycodes
-
-Use the included `snoop-key` utility to identify any key:
-
     ./snoop-key
 
-Press a key and it prints the keycode. For example, the Do Not Disturb
-(half-moon) key on a MacBook shows:
+Press any key and it prints the `hidutil` code. It is fn-aware, so
+pressing the moon key without fn shows `DoNotDisturb 0x10000009B`, while
+fn+moon shows `F6 0x70000003F`.
 
-    [KeyDown] keycode=178  flags=0x800100
-    [KeyUp] keycode=178  flags=0x800100
+There is also a script that wraps `snoop-key` and outputs the full
+`hidutil` command for you:
 
-Then use the keycode directly:
+    ./disable-key.sh
 
-    ./keyguard 178
-    ./keyguard 178:debounce=500
+Press the key when prompted and it prints the command:
 
-Press Ctrl+C to stop. snoop-key is listen-only and won't affect normal
-keyboard operation.
+    # Disable DoNotDisturb by mapping 0x10000009B to 0xFF000001 (undefined usage, silently dropped)
+    hidutil property --set '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x10000009b,"HIDKeyboardModifierMappingDst":0xff000001}]}'
 
-## Install as a login service
+### Permissions
 
-Run keyguard automatically at login:
+`snoop-key` requires Input Monitoring permission. Add your terminal app at:
 
-    sudo make install
-    cp com.local.keyguard.plist ~/Library/LaunchAgents/
-    launchctl load ~/Library/LaunchAgents/com.local.keyguard.plist
-
-Edit the `ProgramArguments` array in the plist to change which keys are
-managed, then reload:
-
-    launchctl unload ~/Library/LaunchAgents/com.local.keyguard.plist
-    launchctl load ~/Library/LaunchAgents/com.local.keyguard.plist
-
-### Uninstall
-
-    launchctl unload ~/Library/LaunchAgents/com.local.keyguard.plist
-    rm ~/Library/LaunchAgents/com.local.keyguard.plist
-    sudo rm /usr/local/bin/keyguard
-
-## Accessibility permission
-
-keyguard needs Accessibility access to intercept keyboard events.
-macOS will prompt on first run, or add it manually:
-
-**System Settings > Privacy & Security > Accessibility**
-
-Add either the `keyguard` binary or Terminal (if running from terminal).
+**System Settings > Privacy & Security > Input Monitoring**
