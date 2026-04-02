@@ -16,6 +16,20 @@ Press Ctrl+C to stop. Multiple keys can be disabled at once:
 
     ./disable-key dnd capslock
 
+## Debounce mode
+
+Instead of fully disabling a key, you can require a long press to
+activate it. Short/accidental taps are suppressed; only a sustained hold
+gets through.
+
+    ./disable-key capslock:debounce          # default 1000ms
+    ./disable-key capslock:debounce=500      # 500ms hold required
+    ./disable-key capslock:debounce=2000     # 2s hold required
+
+You can mix fully disabled and debounced keys:
+
+    ./disable-key dnd capslock:debounce
+
 ## Identifying keys with snoop-key
 
 If you need to find the keycode for a key, run:
@@ -31,6 +45,11 @@ key on a MacBook shows:
 
 Press Ctrl+C to stop. snoop-key is listen-only and won't interfere with
 normal keyboard operation.
+
+You can then use the keycode directly with disable-key:
+
+    ./disable-key 178               # disable keycode 178 (DND)
+    ./disable-key 178:debounce=500  # debounce keycode 178 at 500ms
 
 ## Install as a login service
 
