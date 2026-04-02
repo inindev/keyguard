@@ -42,6 +42,19 @@ If you still want Caps Lock but want to prevent accidental activation,
 
 Adjust the value in milliseconds.
 
+## Combining commands
+
+Multiple properties can be set in a single command:
+
+    # Debounce caps lock (require 1 second hold)
+    # Disable DoNotDisturb by mapping 0x10000009B to 0xFF000001 (undefined usage, silently dropped)
+    hidutil property --set '{
+      "CapsLockDelayOverride":1000,
+      "UserKeyMapping":[{
+        "HIDKeyboardModifierMappingSrc":0x10000009b,
+        "HIDKeyboardModifierMappingDst":0xff000001
+    }]}'
+
 ## How to reset
 
 Clear all disabled keys:
